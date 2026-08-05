@@ -474,11 +474,13 @@ function selectTN1DA(qId, letter){
 function selectDS4Y(qId, subLetter, value){
   if (!currentExam.answers[qId]) currentExam.answers[qId] = {};
   currentExam.answers[qId][subLetter] = value;
+  const suffix = value === 'Đ' ? 'D' : 'S';
   ['D','S'].forEach(v => {
     const btn = document.getElementById('ds-' + qId + '-' + subLetter + '-' + v);
-    btn.classList.remove('on-true', 'on-false');
+    if (btn) btn.classList.remove('on-true', 'on-false');
   });
-  document.getElementById('ds-' + qId + '-' + subLetter + '-' + value).classList.add(value === 'Đ' ? 'on-true' : 'on-false');
+  const targetBtn = document.getElementById('ds-' + qId + '-' + subLetter + '-' + suffix);
+  if (targetBtn) targetBtn.classList.add(value === 'Đ' ? 'on-true' : 'on-false');
 }
 
 function selectTLN(qId, value){
