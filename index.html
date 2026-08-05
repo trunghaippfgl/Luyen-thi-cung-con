@@ -620,6 +620,9 @@ function loadHistory(){
         </div>
       `;
     }).join('');
+  }).catch(e => {
+    console.error(e);
+    alert('Lỗi tải lịch sử: ' + e.message);
   });
 }
 
