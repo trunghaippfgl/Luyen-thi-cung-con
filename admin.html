@@ -118,6 +118,7 @@ function previewExcel(){
 
       parsedQuestions = rows.map(row => ({
         examCode: String(getVal(row, ['mã đề','ma de'])).trim(),
+        grade: parseInt(getVal(row, ['lớp','lop'])) || null,
         subject: String(getVal(row, ['môn học','mon hoc'])).trim(),
         year: parseInt(getVal(row, ['năm','nam'])) || null,
         examType: String(getVal(row, ['loại đề','loai de'])).trim(),
