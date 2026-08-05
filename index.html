@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Luyện Thi Cùng Con</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-950:#0B1220;
+    --navy-900:#111A2E;
+    --navy-800:#1A2740;
+    --navy-700:#243352;
+    --line:#2E3D5C;
+    --gold-500:#E0B44C;
+    --gold-400:#F0C868;
+    --blue-500:#4C8DE0;
+    --green-500:#4CAF7D;
+    --red-500:#E05C5C;
+    --text:#EAEFF7;
+    --text-dim:#9BA9C4;
+  }
+  *{ box-sizing:border-box; }
+  body{ font-family:'Be Vietnam Pro', sans-serif; background:var(--navy-950); color:var(--text); margin:0; padding:0; min-height:100vh; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  /* ---- Layout ---- */
+  #appShell{ max-width:480px; margin:0 auto; min-height:100vh; padding-bottom:80px; position:relative; }
+  .screen{ display:none; padding:20px; }
+  .screen.active{ display:block; }
+
+  /* ---- Auth ---- */
+  #authScreen{ display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+  .auth-box{ width:100%; max-width:380px; background:var(--navy-900); border:1px solid var(--line); border-radius:16px; padding:28px; }
+  .auth-logo{ text-align:center; font-size:28px; font-weight:700; color:var(--gold-500); margin-bottom:4px; }
+  .auth-sub{ text-align:center; color:var(--text-dim); font-size:13px; margin-bottom:20px; }
+  label{ display:block; font-size:13px; color:var(--text-dim); margin:12px 0 4px; }
+  input, select, textarea{
+    width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--line);
+    background:var(--navy-800); color:var(--text); font-family:inherit; font-size:14px;
+  }
+  input:focus, select:focus, textarea:focus{ outline:none; border-color:var(--gold-500); }
+  .btn{ display:inline-block; width:100%; padding:12px; border-radius:10px; border:none; font-weight:600; font-size:14px; cursor:pointer; font-family:inherit; text-align:center; }
+  .btn-primary{ background:var(--gold-500); color:var(--navy-950); }
+  .btn-ghost{ background:var(--navy-800); color:var(--text); border:1px solid var(--line); }
+  .btn-leaf{ background:var(--green-500); color:#fff; }
+  .btn-sm{ padding:8px 12px; font-size:13px; width:auto; }
+  .auth-switch{ text-align:center; margin-top:16px; font-size:13px; color:var(--text-dim); }
+  .auth-switch a{ color:var(--gold-400); cursor:pointer; text-decoration:underline; }
+  .auth-err{ color:var(--red-500); font-size:13px; margin-top:8px; min-height:18px; }
+
+  /* ---- Header ---- */
+  .app-header{ display:flex; justify-content:space-between; align-items:center; padding:20px 20px 10px; }
+  .app-title{ font-size:20px; font-weight:700; color:var(--gold-500); }
+  .app-greeting{ font-size:13px; color:var(--text-dim); }
+  .logout-link{ font-size:12px; color:var(--text-dim); text-decoration:underline; cursor:pointer; }
+
+  /* ---- Cards ---- */
+  .card{ background:var(--navy-900); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px; }
+  .empty-state{ text-align:center; padding:30px 10px; color:var(--text-dim); font-size:14px; }
+  .empty-state .ic{ font-size:32px; margin-bottom:8px; }
+
+  /* ---- Bottom nav ---- */
+  .bottom-nav{ position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto; background:var(--navy-900); border-top:1px solid var(--line); display:flex; }
+  .navbtn{ flex:1; text-align:center; padding:10px 0 8px; background:none; border:none; color:var(--text-dim); font-family:inherit; font-size:11px; cursor:pointer; }
+  .navbtn .ic{ font-size:20px; display:block; margin-bottom:2px; }
+  .navbtn.on{ color:var(--gold-500); }
+</style>
+</head>
+<body>
+
+<!-- ============ MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ ============ -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">📚 Luyện Thi Cùng Con</div>
+    <div class="auth-sub">Ôn luyện đề thi tốt nghiệp THPT</div>
+
+    <div id="loginForm">
+      <label>Email</label>
+      <input id="loginEmail" type="email" placeholder="email@example.com">
+      <label>Mật khẩu</label>
+      <input id="loginPass" type="password" placeholder="••••••••">
+      <div style="text-align:right; margin-top:6px;">
+        <span onclick="showForgotPassword()" style="color:var(--gold-400); font-size:12px; cursor:pointer; text-decoration:underline;">Quên mật khẩu?</span>
+      </div>
+      <div id="loginErr" class="auth-err"></div>
+      <button class="btn btn-primary" style="margin-top:10px;" onclick="doLogin()">Đăng nhập</button>
+      <div class="auth-switch">Chưa có tài khoản? <a onclick="showRegisterForm()">Đăng ký ngay</a></div>
+    </div>
+
+    <div id="registerForm" style="display:none;">
+      <label>Họ và tên</label>
+      <input id="regName" placeholder="VD: Nguyễn Văn A">
+      <label>Email</label>
+      <input id="regEmail" type="email" placeholder="email@example.com">
+      <label>Mật khẩu</label>
+      <input id="regPass" type="password" placeholder="Tối thiểu 6 ký tự">
+      <div id="registerErr" class="auth-err"></div>
+      <button class="btn btn-primary" style="margin-top:10px;" onclick="doRegister()">Đăng ký</button>
+      <div class="auth-switch">Đã có tài khoản? <a onclick="showLoginForm()">Đăng nhập</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ỨNG DỤNG CHÍNH ============ -->
+<div id="appShell" style="display:none;">
+
+  <div class="app-header">
+    <div>
+      <div class="app-title">📚 Luyện Thi Cùng Con</div>
+      <div class="app-greeting" id="userGreeting">Xin chào</div>
+    </div>
+    <span class="logout-link" onclick="doLogout()">Đăng xuất</span>
+  </div>
+
+  <!-- ---- TAB: TRANG CHỦ ---- -->
+  <div class="screen active" id="screen-trang-chu">
+    <div class="card">
+      <div class="empty-state">
+        <div class="ic">👋</div>
+        Chào mừng bạn đến với Luyện Thi Cùng Con!<br>
+        Chọn "Đề thi" bên dưới để bắt đầu luyện tập.
+      </div>
+    </div>
+  </div>
+
+  <!-- ---- TAB: ĐỀ THI ---- -->
+  <div class="screen" id="screen-de-thi">
+    <div class="card">
+      <div class="empty-state">
+        <div class="ic">📝</div>
+        Chưa có đề thi nào. Sắp ra mắt!
+      </div>
+    </div>
+  </div>
+
+  <!-- ---- TAB: LỊCH SỬ ---- -->
+  <div class="screen" id="screen-lich-su">
+    <div class="card">
+      <div class="empty-state">
+        <div class="ic">📊</div>
+        Chưa có lịch sử làm bài nào.
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="navbtn on" id="nav-trang-chu" onclick="showTab('trang-chu')"><span class="ic">🏠</span>Trang chủ</button>
+    <button class="navbtn" id="nav-de-thi" onclick="showTab('de-thi')"><span class="ic">📝</span>Đề thi</button>
+    <button class="navbtn" id="nav-lich-su" onclick="showTab('lich-su')"><span class="ic">📊</span>Lịch sử</button>
+  </div>
+</div>
+
+<!-- ============ FIREBASE ============ -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCzcEUEpUWqAlaZmciiBLwA9cj9tE3OsYI",
+  authDomain: "luyen-thi-cung-con.firebaseapp.com",
+  projectId: "luyen-thi-cung-con",
+  storageBucket: "luyen-thi-cung-con.firebasestorage.app",
+  messagingSenderId: "377510724352",
+  appId: "1:377510724352:web:d3b1d50a6d298674b229e5"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUserName = '';
+
+// ---------- AUTH UI SWITCHING ----------
+function showLoginForm(){
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('registerForm').style.display = 'none';
+}
+function showRegisterForm(){
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('registerForm').style.display = 'block';
+}
+function showForgotPassword(){
+  const email = prompt('Nhập email đã đăng ký để nhận link đặt lại mật khẩu:');
+  if (!email) return;
+  auth.sendPasswordResetEmail(email).then(() => {
+    alert('Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư (kể cả mục Spam).');
+  }).catch(e => {
+    alert('Lỗi: ' + e.message);
+  });
+}
+
+// ---------- ĐĂNG KÝ ----------
+function doRegister(){
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const errBox = document.getElementById('registerErr');
+  errBox.textContent = '';
+
+  if (!name){ errBox.textContent = 'Vui lòng nhập họ tên.'; return; }
+  if (!email){ errBox.textContent = 'Vui lòng nhập email.'; return; }
+  if (pass.length < 6){ errBox.textContent = 'Mật khẩu cần tối thiểu 6 ký tự.'; return; }
+
+  auth.createUserWithEmailAndPassword(email, pass).then(cred => {
+    return db.collection('users').doc(cred.user.uid).set({
+      name: name,
+      email: email,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }).catch(e => {
+    if (e.code === 'auth/email-already-in-use'){
+      errBox.textContent = 'Email này đã được đăng ký.';
+    } else if (e.code === 'auth/invalid-email'){
+      errBox.textContent = 'Email không hợp lệ.';
+    } else {
+      errBox.textContent = 'Lỗi: ' + e.message;
+    }
+  });
+}
+
+// ---------- ĐĂNG NHẬP ----------
+function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const errBox = document.getElementById('loginErr');
+  errBox.textContent = '';
+
+  if (!email || !pass){ errBox.textContent = 'Vui lòng nhập đầy đủ email và mật khẩu.'; return; }
+
+  auth.signInWithEmailAndPassword(email, pass).catch(e => {
+    if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found'){
+      errBox.textContent = 'Email hoặc mật khẩu không đúng.';
+    } else {
+      errBox.textContent = 'Lỗi: ' + e.message;
+    }
+  });
+}
+
+function doLogout(){
+  auth.signOut();
+}
+
+// ---------- TAB SWITCHING ----------
+function showTab(name){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('on'));
+  document.getElementById('nav-' + name).classList.add('on');
+}
+
+// ---------- AUTH STATE ----------
+auth.onAuthStateChanged(user => {
+  if (user){
+    db.collection('users').doc(user.uid).get().then(doc => {
+      currentUserName = doc.exists ? doc.data().name : '';
+      document.getElementById('userGreeting').textContent = 'Xin chào, ' + (currentUserName || user.email);
+    });
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('appShell').style.display = 'block';
+  } else {
+    document.getElementById('authScreen').style.display = 'flex';
+    document.getElementById('appShell').style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>
