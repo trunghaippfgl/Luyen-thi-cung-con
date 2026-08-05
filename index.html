@@ -741,6 +741,54 @@ auth.onAuthStateChanged(user => {
     document.getElementById('appShell').style.display = 'none';
   }
 });
+function loadWeakTopics(){
+  const user = auth.currentUser;
+  if (!user) return;
+  db.collection('questionAttempts').where('userId', '==', user.uid).get().then(snap => {
+    const box = document.getElementById('weakTopicsBox');
+    if (snap.empty){
+      box.innerHTML = '<div class="empty-state" style="padding:16px;">Chưa có dữ liệu. Làm vài đề để xem thống kê nhé!</div>';
+      return;
+    }
+    const stats = {};
+    snap.forEach(doc => {
+      const d = doc.data();
+      const key = d.subject + ' - ' + d.topic;
+      if (!stats[key]) stats[key] = { total: 0, correct: 0 };
+      stats[key].total++;
+      if (d.isCorrect) stats[key].correct++;
+    });
+
+    const arr = Object.keys(stats).map(key => {
+      const s = stats[key];
+      const rate = s.total > 0 ? (s.correct / s.total * 100) : 0;
+      return { key, total: s.total, correct: s.correct, rate };
+    }).filter(s => s.total >= 2); // chỉ hiện chủ đề đã làm ít nhất 2 câu, tránh nhiễu
+
+    arr.sort((a, b) => a.rate - b.rate);
+    const weakest = arr.slice(0, 5);
+
+    if (!weakest.length){
+      box.innerHTML = '<div class="empty-state" style="padding:16px;">Chưa đủ dữ liệu để thống kê (cần làm ít nhất 2 câu mỗi chủ đề).</div>';
+      return;
+    }
+
+    box.innerHTML = weakest.map(s => {
+      const color = s.rate < 50 ? 'var(--red-500)' : s.rate < 75 ? 'var(--gold-500)' : 'var(--green-500)';
+      return `
+        <div style="margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+            <span>${s.key}</span>
+            <span class="mono" style="color:${color};">${s.correct}/${s.total} (${s.rate.toFixed(0)}%)</span>
+          </div>
+          <div style="background:var(--navy-800); border-radius:6px; height:6px; overflow:hidden;">
+            <div style="background:${color}; height:100%; width:${s.rate}%;"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }).catch(e => console.error('Lỗi tải thống kê:', e));
+}
 </script>
 </body>
 </html>
