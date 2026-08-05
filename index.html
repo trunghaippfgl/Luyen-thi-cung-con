@@ -300,6 +300,7 @@ function showTab(name){
   document.getElementById('screen-' + name).classList.add('active');
   document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('on'));
   document.getElementById('nav-' + name).classList.add('on');
+  if (name === 'trang-chu') loadWeakTopics();
   if (name === 'de-thi'){ loadExamList(); loadPracticeFilters(); }
   if (name === 'lich-su') loadHistory();
 }
