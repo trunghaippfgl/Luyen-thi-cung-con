@@ -23,12 +23,10 @@
   *{ box-sizing:border-box; }
   body{ font-family:'Be Vietnam Pro', sans-serif; background:var(--navy-950); color:var(--text); margin:0; padding:0; min-height:100vh; }
   .mono{ font-family:'JetBrains Mono', monospace; }
-
   /* ---- Layout ---- */
   #appShell{ max-width:480px; margin:0 auto; min-height:100vh; padding-bottom:80px; position:relative; }
   .screen{ display:none; padding:20px; }
   .screen.active{ display:block; }
-
   /* ---- Auth ---- */
   #authScreen{ display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
   .auth-box{ width:100%; max-width:380px; background:var(--navy-900); border:1px solid var(--line); border-radius:16px; padding:28px; }
@@ -48,30 +46,25 @@
   .auth-switch{ text-align:center; margin-top:16px; font-size:13px; color:var(--text-dim); }
   .auth-switch a{ color:var(--gold-400); cursor:pointer; text-decoration:underline; }
   .auth-err{ color:var(--red-500); font-size:13px; margin-top:8px; min-height:18px; }
-
   /* ---- Header ---- */
   .app-header{ display:flex; justify-content:space-between; align-items:center; padding:20px 20px 10px; }
   .app-title{ font-size:20px; font-weight:700; color:var(--gold-500); }
   .app-greeting{ font-size:13px; color:var(--text-dim); }
   .logout-link{ font-size:12px; color:var(--text-dim); text-decoration:underline; cursor:pointer; }
-
   /* ---- Cards ---- */
   .card{ background:var(--navy-900); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px; }
   .empty-state{ text-align:center; padding:30px 10px; color:var(--text-dim); font-size:14px; }
   .empty-state .ic{ font-size:32px; margin-bottom:8px; }
-
   /* ---- Bottom nav ---- */
   .bottom-nav{ position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto; background:var(--navy-900); border-top:1px solid var(--line); display:flex; }
   .navbtn{ flex:1; text-align:center; padding:10px 0 8px; background:none; border:none; color:var(--text-dim); font-family:inherit; font-size:11px; cursor:pointer; }
   .navbtn .ic{ font-size:20px; display:block; margin-bottom:2px; }
   .navbtn.on{ color:var(--gold-500); }
-
   /* ---- Danh sách đề thi ---- */
   .exam-item{ display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--line); }
   .exam-item:last-child{ border-bottom:none; }
   .exam-name{ font-weight:600; font-size:14px; }
   .exam-meta{ font-size:12px; color:var(--text-dim); margin-top:2px; }
-
   /* ---- Màn hình làm bài ---- */
   #examScreen{ display:none; position:fixed; inset:0; background:var(--navy-950); z-index:100; overflow-y:auto; }
   .exam-header{ position:sticky; top:0; background:var(--navy-900); border-bottom:1px solid var(--line); padding:14px 20px; display:flex; justify-content:space-between; align-items:center; z-index:10; }
@@ -92,7 +85,6 @@
   .ds-btn.on-true{ background:var(--green-500); color:#fff; border-color:var(--green-500); }
   .ds-btn.on-false{ background:var(--red-500); color:#fff; border-color:var(--red-500); }
   .exam-submit-bar{ position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto; background:var(--navy-900); border-top:1px solid var(--line); padding:12px 20px; }
-
   /* ---- Màn hình kết quả ---- */
   .result-score{ text-align:center; padding:24px 0; }
   .result-score .big{ font-size:48px; font-weight:700; color:var(--gold-500); font-family:'JetBrains Mono', monospace; }
@@ -106,13 +98,11 @@
 </style>
 </head>
 <body>
-
 <!-- ============ MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ ============ -->
 <div id="authScreen">
   <div class="auth-box">
     <div class="auth-logo">📚 Luyện Thi Cùng Con</div>
     <div class="auth-sub">Ôn luyện đề thi tốt nghiệp THPT</div>
-
     <div id="loginForm">
       <label>Email</label>
       <input id="loginEmail" type="email" placeholder="email@example.com">
@@ -125,7 +115,6 @@
       <button class="btn btn-primary" style="margin-top:10px;" onclick="doLogin()">Đăng nhập</button>
       <div class="auth-switch">Chưa có tài khoản? <a onclick="showRegisterForm()">Đăng ký ngay</a></div>
     </div>
-
     <div id="registerForm" style="display:none;">
       <label>Họ và tên</label>
       <input id="regName" placeholder="VD: Nguyễn Văn A">
@@ -139,10 +128,8 @@
     </div>
   </div>
 </div>
-
 <!-- ============ ỨNG DỤNG CHÍNH ============ -->
 <div id="appShell" style="display:none;">
-
   <div class="app-header">
     <div>
       <div class="app-title">📚 Luyện Thi Cùng Con</div>
@@ -150,7 +137,6 @@
     </div>
     <span class="logout-link" onclick="doLogout()">Đăng xuất</span>
   </div>
-
   <!-- ---- TAB: TRANG CHỦ ---- -->
   <div class="screen active" id="screen-trang-chu">
     <div class="card">
@@ -167,7 +153,6 @@
       </div>
     </div>
   </div>
-
   <!-- ---- TAB: ĐỀ THI ---- -->
   <div class="screen" id="screen-de-thi">
     <div class="card">
@@ -192,7 +177,6 @@
       </div>
     </div>
   </div>
-
   <!-- ---- TAB: LỊCH SỬ ---- -->
   <div class="screen" id="screen-lich-su">
     <div class="card">
@@ -202,14 +186,12 @@
       </div>
     </div>
   </div>
-
   <div class="bottom-nav">
     <button class="navbtn on" id="nav-trang-chu" onclick="showTab('trang-chu')"><span class="ic">🏠</span>Trang chủ</button>
     <button class="navbtn" id="nav-de-thi" onclick="showTab('de-thi')"><span class="ic">📝</span>Đề thi</button>
     <button class="navbtn" id="nav-lich-su" onclick="showTab('lich-su')"><span class="ic">📊</span>Lịch sử</button>
   </div>
 </div>
-
 <!-- ============ MÀN HÌNH LÀM BÀI THI ============ -->
 <div id="examScreen">
   <div class="exam-header">
@@ -224,7 +206,6 @@
     <button class="btn btn-leaf" onclick="confirmSubmitExam()">Nộp bài</button>
   </div>
 </div>
-
 <!-- ============ MÀN HÌNH KẾT QUẢ ============ -->
 <div id="resultScreen" style="display:none; position:fixed; inset:0; background:var(--navy-950); z-index:100; overflow-y:auto;">
   <div class="exam-header">
@@ -233,9 +214,7 @@
   </div>
   <div class="exam-body" id="resultBody"></div>
 </div>
-
 <!-- ============ FIREBASE ============ -->
-
 <!-- ============ FIREBASE ============ -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -252,9 +231,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-
 let currentUserName = '';
-
 // ---------- AUTH UI SWITCHING ----------
 function showLoginForm(){
   document.getElementById('loginForm').style.display = 'block';
@@ -273,7 +250,6 @@ function showForgotPassword(){
     alert('Lỗi: ' + e.message);
   });
 }
-
 // ---------- ĐĂNG KÝ ----------
 function doRegister(){
   const name = document.getElementById('regName').value.trim();
@@ -281,11 +257,9 @@ function doRegister(){
   const pass = document.getElementById('regPass').value;
   const errBox = document.getElementById('registerErr');
   errBox.textContent = '';
-
   if (!name){ errBox.textContent = 'Vui lòng nhập họ tên.'; return; }
   if (!email){ errBox.textContent = 'Vui lòng nhập email.'; return; }
   if (pass.length < 6){ errBox.textContent = 'Mật khẩu cần tối thiểu 6 ký tự.'; return; }
-
   auth.createUserWithEmailAndPassword(email, pass).then(cred => {
     return db.collection('users').doc(cred.user.uid).set({
       name: name,
@@ -302,16 +276,13 @@ function doRegister(){
     }
   });
 }
-
 // ---------- ĐĂNG NHẬP ----------
 function doLogin(){
   const email = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPass').value;
   const errBox = document.getElementById('loginErr');
   errBox.textContent = '';
-
   if (!email || !pass){ errBox.textContent = 'Vui lòng nhập đầy đủ email và mật khẩu.'; return; }
-
   auth.signInWithEmailAndPassword(email, pass).catch(e => {
     if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found'){
       errBox.textContent = 'Email hoặc mật khẩu không đúng.';
@@ -320,11 +291,9 @@ function doLogin(){
     }
   });
 }
-
 function doLogout(){
   auth.signOut();
 }
-
 // ---------- TAB SWITCHING ----------
 function showTab(name){
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -334,7 +303,6 @@ function showTab(name){
   if (name === 'de-thi'){ loadExamList(); loadPracticeFilters(); }
   if (name === 'lich-su') loadHistory();
 }
-
 // ================= ĐỀ THI =================
 const SUBJECT_DURATION = { 'Toán': 90, 'Ngữ văn': 120 };
 function getDuration(subject){ return SUBJECT_DURATION[subject] || 50; }
@@ -355,7 +323,6 @@ function loadPracticeFilters(){
     sel.value = current;
   });
 }
-
 function onPracticeSubjectChange(){
   const subject = document.getElementById('practiceSubject').value;
   const topicSel = document.getElementById('practiceTopic');
@@ -363,32 +330,27 @@ function onPracticeSubjectChange(){
   topicSel.innerHTML = '<option value="">-- Tất cả chủ đề --</option>' +
     topics.map(t => `<option value="${t}">${t}</option>`).join('');
 }
-
 function startPractice(){
   const subject = document.getElementById('practiceSubject').value;
   const topic = document.getElementById('practiceTopic').value;
   if (!subject){ alert('Chọn môn học trước.'); return; }
-
   let query = db.collection('questions').where('subject', '==', subject);
   if (topic) query = query.where('topic', '==', topic);
-
   query.get().then(snap => {
     const questions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     if (!questions.length){ alert('Không có câu hỏi nào phù hợp.'); return; }
     questions.sort((a, b) => (a.type > b.type ? 1 : -1));
-
     currentExam = { code: 'ONTAP-' + subject + (topic ? '-' + topic : ''), subject, questions, answers: {}, isPractice: true };
     document.getElementById('examTitle').textContent = 'Ôn tập: ' + subject + (topic ? ' - ' + topic : '');
     document.getElementById('examSubtitle').textContent = questions.length + ' câu · Không giới hạn thời gian';
     document.getElementById('examTimer').textContent = '∞';
     document.getElementById('examTimer').classList.remove('warning');
     clearInterval(examTimerInterval);
-
     renderExamBody();
     document.getElementById('examScreen').style.display = 'block';
   });
 }
-  
+
 function loadExamList(){
   db.collection('questions').get().then(snap => {
     const byExam = {};
@@ -420,31 +382,26 @@ function loadExamList(){
 let currentExam = { code: '', subject: '', questions: [], answers: {} };
 let examTimerInterval = null;
 let examEndTime = 0;
-
 function startExam(examCode){
   db.collection('questions').where('examCode', '==', examCode).get().then(snap => {
     const questions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     if (!questions.length){ alert('Đề thi không có câu hỏi.'); return; }
     questions.sort((a, b) => (a.type > b.type ? 1 : -1)); // gom nhóm TN1DA, DS4Y, TLN
-
     currentExam = { code: examCode, subject: questions[0].subject, questions, answers: {} };
     const duration = getDuration(currentExam.subject);
     document.getElementById('examTitle').textContent = currentExam.subject + ' - ' + examCode;
     document.getElementById('examSubtitle').textContent = questions.length + ' câu · ' + duration + ' phút';
-
     renderExamBody();
     startExamTimer(duration * 60);
     document.getElementById('examScreen').style.display = 'block';
   });
 }
-
 function startExamTimer(seconds){
   examEndTime = Date.now() + seconds * 1000;
   clearInterval(examTimerInterval);
   examTimerInterval = setInterval(updateTimerDisplay, 1000);
   updateTimerDisplay();
 }
-
 function updateTimerDisplay(){
   const remain = Math.max(0, Math.round((examEndTime - Date.now()) / 1000));
   const m = Math.floor(remain / 60).toString().padStart(2, '0');
@@ -458,11 +415,9 @@ function updateTimerDisplay(){
     submitExam();
   }
 }
-
 function renderExamBody(){
   const parts = { TN1DA: [], DS4Y: [], TLN: [] };
   currentExam.questions.forEach((q, idx) => parts[q.type].push({ ...q, idx }));
-
   let html = '';
   if (parts.TN1DA.length){
     html += '<div class="part-title">Phần I - Trắc nghiệm nhiều lựa chọn</div>';
@@ -478,7 +433,6 @@ function renderExamBody(){
   }
   document.getElementById('examBody').innerHTML = html;
 }
-
 function renderTN1DA(q, num){
   const opts = [['A', q.answerA], ['B', q.answerB], ['C', q.answerC], ['D', q.answerD]];
   return `
@@ -494,7 +448,6 @@ function renderTN1DA(q, num){
     </div>
   `;
 }
-
 function renderDS4Y(q, num){
   const lines = q.content.split('\n');
   const stem = lines[0];
@@ -518,7 +471,6 @@ function renderDS4Y(q, num){
     </div>
   `;
 }
-
 function renderTLN(q, num){
   return `
     <div class="q-card">
@@ -528,18 +480,15 @@ function renderTLN(q, num){
     </div>
   `;
 }
-
 function escapeHtml(str){
   return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
-
 function selectTN1DA(qId, letter){
   currentExam.answers[qId] = letter;
   ['A','B','C','D'].forEach(l => {
     document.getElementById('opt-' + qId + '-' + l).classList.toggle('selected', l === letter);
   });
 }
-
 function selectDS4Y(qId, subLetter, value){
   if (!currentExam.answers[qId]) currentExam.answers[qId] = {};
   currentExam.answers[qId][subLetter] = value;
@@ -551,7 +500,6 @@ function selectDS4Y(qId, subLetter, value){
   const targetBtn = document.getElementById('ds-' + qId + '-' + subLetter + '-' + suffix);
   if (targetBtn) targetBtn.classList.add(value === 'Đ' ? 'on-true' : 'on-false');
 }
-
 function selectTLN(qId, value){
   currentExam.answers[qId] = value.trim();
 }
@@ -561,7 +509,6 @@ function confirmSubmitExam(){
   if (!confirm('Bạn đã làm ' + answeredCount + '/' + totalCount + ' câu. Xác nhận nộp bài?')) return;
   submitExam();
 }
-
 function scoreDS4Y(correctStr, userAns){
   // correctStr dạng "ĐSĐS", userAns dạng {a:'Đ', b:'S', c:'Đ', d:'S'}
   const letters = ['a','b','c','d'];
@@ -572,20 +519,16 @@ function scoreDS4Y(correctStr, userAns){
   const points = { 0: 0, 1: 0.1, 2: 0.25, 3: 0.5, 4: 1.0 };
   return { correctCount, points: points[correctCount] };
 }
-
 function submitExam(){
   clearInterval(examTimerInterval);
   document.getElementById('examScreen').style.display = 'none';
-
   let totalScore = 0;
   const results = [];
-
   currentExam.questions.forEach(q => {
     const userAns = currentExam.answers[q.id];
     let isCorrect = false;
     let points = 0;
     let maxPoints = 0;
-
     if (q.type === 'TN1DA'){
       maxPoints = 0.25;
       isCorrect = userAns === q.correctAnswer;
@@ -600,22 +543,17 @@ function submitExam(){
       isCorrect = userAns && userAns.toString().trim() === q.correctAnswer.toString().trim();
       points = isCorrect ? maxPoints : 0;
     }
-
     totalScore += points;
     results.push({ ...q, userAns, isCorrect, points, maxPoints });
   });
-
   const maxTotal = currentExam.questions.reduce((sum, q) => {
     if (q.type === 'TN1DA') return sum + 0.25;
     if (q.type === 'DS4Y') return sum + 1.0;
     return sum + (currentExam.subject === 'Toán' ? 0.5 : 0.25);
   }, 0);
-
   // Chuẩn hoá về thang điểm 10
   const scoreOn10 = maxTotal > 0 ? (totalScore / maxTotal * 10) : 0;
-
   const user = auth.currentUser;
-
   // Ghi lại từng câu để thống kê điểm yếu theo chủ đề
   let attemptBatch = db.batch();
   results.forEach(r => {
@@ -629,7 +567,6 @@ function submitExam(){
     });
   });
   attemptBatch.commit().catch(e => console.error('Lỗi ghi thống kê:', e));
-
   if (currentExam.isPractice){
     renderResultScreen(results, scoreOn10);
     return;
@@ -648,10 +585,8 @@ function submitExam(){
     })),
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
-
   renderResultScreen(results, scoreOn10);
 }
-
 function renderResultScreen(results, scoreOn10){
   let html = `
     <div class="result-score">
@@ -676,7 +611,6 @@ function renderResultScreen(results, scoreOn10){
   document.getElementById('resultBody').innerHTML = html;
   document.getElementById('resultScreen').style.display = 'block';
 }
-
 function formatUserAnswer(r){
   if (r.type === 'DS4Y'){
     if (!r.userAns) return '(chưa làm)';
@@ -684,12 +618,10 @@ function formatUserAnswer(r){
   }
   return r.userAns || '(chưa làm)';
 }
-
 function closeResultScreen(){
   document.getElementById('resultScreen').style.display = 'none';
   showTab('lich-su');
 }
-
 // ================= LỊCH SỬ =================
 function loadHistory(){
   const user = auth.currentUser;
@@ -726,7 +658,6 @@ function viewSubmission(submissionId){
     renderResultScreen(d.results, d.score);
   });
 }
-
 // ---------- AUTH STATE ----------
 auth.onAuthStateChanged(user => {
   if (user){
@@ -736,6 +667,7 @@ auth.onAuthStateChanged(user => {
     });
     document.getElementById('authScreen').style.display = 'none';
     document.getElementById('appShell').style.display = 'block';
+    loadWeakTopics();
   } else {
     document.getElementById('authScreen').style.display = 'flex';
     document.getElementById('appShell').style.display = 'none';
@@ -758,21 +690,17 @@ function loadWeakTopics(){
       stats[key].total++;
       if (d.isCorrect) stats[key].correct++;
     });
-
     const arr = Object.keys(stats).map(key => {
       const s = stats[key];
       const rate = s.total > 0 ? (s.correct / s.total * 100) : 0;
       return { key, total: s.total, correct: s.correct, rate };
     }).filter(s => s.total >= 2); // chỉ hiện chủ đề đã làm ít nhất 2 câu, tránh nhiễu
-
     arr.sort((a, b) => a.rate - b.rate);
     const weakest = arr.slice(0, 5);
-
     if (!weakest.length){
       box.innerHTML = '<div class="empty-state" style="padding:16px;">Chưa đủ dữ liệu để thống kê (cần làm ít nhất 2 câu mỗi chủ đề).</div>';
       return;
     }
-
     box.innerHTML = weakest.map(s => {
       const color = s.rate < 50 ? 'var(--red-500)' : s.rate < 75 ? 'var(--gold-500)' : 'var(--green-500)';
       return `
