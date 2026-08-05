@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản trị - Luyện Thi Cùng Con</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  body{ font-family: Arial, sans-serif; background:#0B1220; color:#EAEFF7; margin:0; padding:20px; }
+  h1{ color:#E0B44C; font-size:20px; }
+  h3{ color:#E0B44C; }
+  .box{ max-width:420px; margin:60px auto; background:#111A2E; padding:24px; border-radius:12px; }
+  input, select{ width:100%; padding:10px; margin:8px 0; border-radius:8px; border:1px solid #2E3D5C; background:#1A2740; color:#EAEFF7; box-sizing:border-box; }
+  button{ padding:12px 18px; border-radius:8px; border:none; background:#E0B44C; color:#0B1220; font-weight:600; cursor:pointer; margin-top:10px; }
+  button.secondary{ background:#1A2740; color:#EAEFF7; border:1px solid #2E3D5C; }
+  button.danger{ background:#E05C5C; color:#fff; }
+  .err{ color:#e05252; font-size:13px; margin-top:6px; }
+  table{ width:100%; border-collapse:collapse; margin-top:16px; }
+  th, td{ padding:10px; text-align:left; border-bottom:1px solid #2E3D5C; font-size:13px; }
+  th{ color:#E0B44C; }
+  .card{ background:#111A2E; border:1px solid #2E3D5C; border-radius:12px; padding:16px; margin-bottom:16px; }
+  #adminBox{ max-width:900px; margin:0 auto; }
+  .warn{ color:#F0C868; font-size:13px; }
+</style>
+</head>
+<body>
+
+<div id="loginBox" class="box">
+  <h1>🔐 Quản trị Luyện Thi Cùng Con</h1>
+  <input id="adminEmail" type="email" placeholder="Email quản trị">
+  <input id="adminPass" type="password" placeholder="Mật khẩu">
+  <button onclick="doAdminLogin()">Đăng nhập</button>
+  <div id="loginErr" class="err"></div>
+</div>
+
+<div id="adminBox" style="display:none;">
+  <h1>🔐 Quản trị Luyện Thi Cùng Con</h1>
+
+  <div class="card">
+    <h3>📥 Nhập câu hỏi từ Excel</h3>
+    <p>Chọn file Excel theo đúng mẫu (sheet "Câu hỏi"). Hệ thống sẽ đọc và xem trước trước khi lưu.</p>
+    <input type="file" id="excelFile" accept=".xlsx,.xls">
+    <button onclick="previewExcel()">Xem trước dữ liệu</button>
+    <div id="previewResult"></div>
+  </div>
+
+  <div class="card">
+    <h3>📋 Danh sách đề đang có trong hệ thống</h3>
+    <button class="secondary" onclick="loadExistingExams()">Tải lại danh sách</button>
+    <table>
+      <thead><tr><th>Mã đề</th><th>Môn học</th><th>Số câu</th><th></th></tr></thead>
+      <tbody id="examRows"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCzcEUEpUWqAlaZmciiBLwA9cj9tE3OsYI",
+  authDomain: "luyen-thi-cung-con.firebaseapp.com",
+  projectId: "luyen-thi-cung-con",
+  storageBucket: "luyen-thi-cung-con.firebasestorage.app",
+  messagingSenderId: "377510724352",
+  appId: "1:377510724352:web:d3b1d50a6d298674b229e5"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const ADMIN_UID = "dYfxMiAIuVXBlwTpbaOveA0ipAy2";
+let parsedQuestions = [];
+
+function doAdminLogin(){
+  const email = document.getElementById('adminEmail').value.trim();
+  const pass = document.getElementById('adminPass').value;
+  document.getElementById('loginErr').textContent = '';
+  auth.signInWithEmailAndPassword(email, pass).catch(e => {
+    document.getElementById('loginErr').textContent = 'Đăng nhập thất bại: ' + e.message;
+  });
+}
+
+auth.onAuthStateChanged(user => {
+  if (user && user.uid === ADMIN_UID){
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('adminBox').style.display = 'block';
+    loadExistingExams();
+  } else if (user){
+    document.getElementById('loginErr').textContent = 'Tài khoản này không có quyền quản trị.';
+    auth.signOut();
+  } else {
+    document.getElementById('loginBox').style.display = 'block';
+    document.getElementById('adminBox').style.display = 'none';
+  }
+});
+
+function getVal(row, keys){
+  for (const k of Object.keys(row)){
+    const norm = k.trim().toLowerCase();
+    if (keys.some(key => norm.includes(key))) return row[k];
+  }
+  return '';
+}
+
+function previewExcel(){
+  const file = document.getElementById('excelFile').files[0];
+  if (!file){ alert('Chọn file trước.'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames.includes('Câu hỏi') ? 'Câu hỏi' : workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+      parsedQuestions = rows.map(row => ({
+        examCode: String(getVal(row, ['mã đề','ma de'])).trim(),
+        subject: String(getVal(row, ['môn học','mon hoc'])).trim(),
+        year: parseInt(getVal(row, ['năm','nam'])) || null,
+        examType: String(getVal(row, ['loại đề','loai de'])).trim(),
+        topic: String(getVal(row, ['chương','chuong','chủ đề','chu de'])).trim(),
+        level: String(getVal(row, ['mức độ','muc do'])).trim(),
+        type: String(getVal(row, ['loại câu hỏi','loai cau hoi'])).trim().toUpperCase(),
+        content: String(getVal(row, ['nội dung câu hỏi','noi dung cau hoi'])).trim(),
+        answerA: String(getVal(row, ['đáp án a','dap an a'])).trim(),
+        answerB: String(getVal(row, ['đáp án b','dap an b'])).trim(),
+        answerC: String(getVal(row, ['đáp án c','dap an c'])).trim(),
+        answerD: String(getVal(row, ['đáp án d','dap an d'])).trim(),
+        correctAnswer: String(getVal(row, ['đáp án đúng','dap an dung'])).trim(),
+        explanation: String(getVal(row, ['giải thích','giai thich'])).trim(),
+      })).filter(q => q.examCode && q.content);
+
+      const invalid = parsedQuestions.filter(q => !['TN1DA','DS4Y','TLN'].includes(q.type));
+      const byExam = {};
+      parsedQuestions.forEach(q => { byExam[q.examCode] = (byExam[q.examCode]||0) + 1; });
+
+      let html = '<p><b>' + parsedQuestions.length + '</b> câu hỏi hợp lệ, thuộc <b>' + Object.keys(byExam).length + '</b> mã đề:</p><ul>';
+      Object.keys(byExam).forEach(code => { html += '<li>' + code + ': ' + byExam[code] + ' câu</li>'; });
+      html += '</ul>';
+      if (invalid.length){
+        html += '<p class="warn">⚠️ Có ' + invalid.length + ' câu bị sai "Loại câu hỏi" (phải là TN1DA/DS4Y/TLN), sẽ KHÔNG được nhập.</p>';
+        parsedQuestions = parsedQuestions.filter(q => ['TN1DA','DS4Y','TLN'].includes(q.type));
+      }
+      html += '<button onclick="confirmImport()">✅ Xác nhận lưu vào hệ thống</button>';
+      document.getElementById('previewResult').innerHTML = html;
+    } catch (err){
+      alert('Lỗi đọc file: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function confirmImport(){
+  if (!parsedQuestions.length){ alert('Không có câu hỏi hợp lệ để nhập.'); return; }
+  if (!confirm('Xác nhận lưu ' + parsedQuestions.length + ' câu hỏi vào hệ thống?')) return;
+
+  let batch = db.batch();
+  let count = 0;
+  const commits = [];
+  parsedQuestions.forEach(q => {
+    const ref = db.collection('questions').doc();
+    batch.set(ref, { ...q, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    count++;
+    if (count % 400 === 0){ commits.push(batch.commit()); batch = db.batch(); }
+  });
+  commits.push(batch.commit());
+
+  Promise.all(commits).then(() => {
+    alert('Đã nhập thành công ' + parsedQuestions.length + ' câu hỏi!');
+    document.getElementById('previewResult').innerHTML = '';
+    document.getElementById('excelFile').value = '';
+    parsedQuestions = [];
+    loadExistingExams();
+  }).catch(e => alert('Lỗi: ' + e.message));
+}
+
+function loadExistingExams(){
+  db.collection('questions').get().then(snap => {
+    const byExam = {};
+    snap.forEach(doc => {
+      const d = doc.data();
+      const key = d.examCode + '||' + d.subject;
+      byExam[key] = (byExam[key]||0) + 1;
+    });
+    const rows = Object.keys(byExam).map(key => {
+      const [examCode, subject] = key.split('||');
+      return { examCode, subject, count: byExam[key] };
+    });
+    document.getElementById('examRows').innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.examCode}</td>
+        <td>${r.subject}</td>
+        <td>${r.count}</td>
+        <td><button class="danger" onclick="deleteExam('${r.examCode}')">Xoá đề</button></td>
+      </tr>
+    `).join('') || '<tr><td colspan="4">Chưa có đề nào.</td></tr>';
+  });
+}
+
+function deleteExam(examCode){
+  if (!confirm('Xoá toàn bộ câu hỏi thuộc mã đề "' + examCode + '"? Không thể hoàn tác.')) return;
+  db.collection('questions').where('examCode', '==', examCode).get().then(snap => {
+    const batch = db.batch();
+    snap.forEach(doc => batch.delete(doc.ref));
+    return batch.commit();
+  }).then(() => loadExistingExams())
+    .catch(e => alert('Lỗi: ' + e.message));
+}
+</script>
+</body>
+</html>
