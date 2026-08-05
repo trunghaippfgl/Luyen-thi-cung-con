@@ -609,6 +609,21 @@ function submitExam(){
   const scoreOn10 = maxTotal > 0 ? (totalScore / maxTotal * 10) : 0;
 
   const user = auth.currentUser;
+
+  // Ghi lại từng câu để thống kê điểm yếu theo chủ đề
+  let attemptBatch = db.batch();
+  results.forEach(r => {
+    const ref = db.collection('questionAttempts').doc();
+    attemptBatch.set(ref, {
+      userId: user.uid,
+      subject: currentExam.subject,
+      topic: r.topic || 'Chưa phân loại',
+      isCorrect: r.isCorrect,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  });
+  attemptBatch.commit().catch(e => console.error('Lỗi ghi thống kê:', e));
+
   if (currentExam.isPractice){
     renderResultScreen(results, scoreOn10);
     return;
