@@ -312,6 +312,313 @@ function showTab(name){
   document.getElementById('screen-' + name).classList.add('active');
   document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('on'));
   document.getElementById('nav-' + name).classList.add('on');
+  if (name === 'de-thi') loadExamList();
+  if (name === 'lich-su') loadHistory();
+}
+
+// ================= ĐỀ THI =================
+const SUBJECT_DURATION = { 'Toán': 90, 'Ngữ văn': 120 };
+function getDuration(subject){ return SUBJECT_DURATION[subject] || 50; }
+
+function loadExamList(){
+  db.collection('questions').get().then(snap => {
+    const byExam = {};
+    snap.forEach(doc => {
+      const d = doc.data();
+      if (!byExam[d.examCode]) byExam[d.examCode] = { subject: d.subject, year: d.year, examType: d.examType, count: 0 };
+      byExam[d.examCode].count++;
+    });
+    const codes = Object.keys(byExam);
+    const box = document.getElementById('examListBox');
+    if (!codes.length){
+      box.innerHTML = '<div class="empty-state"><div class="ic">📝</div>Chưa có đề thi nào.</div>';
+      return;
+    }
+    box.innerHTML = codes.map(code => {
+      const e = byExam[code];
+      return `
+        <div class="exam-item">
+          <div>
+            <div class="exam-name">${e.subject} - ${e.examType || ''} ${e.year || ''}</div>
+            <div class="exam-meta">${e.count} câu · ${getDuration(e.subject)} phút</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="startExam('${code}')">Bắt đầu</button>
+        </div>
+      `;
+    }).join('');
+  });
+}
+let currentExam = { code: '', subject: '', questions: [], answers: {} };
+let examTimerInterval = null;
+let examEndTime = 0;
+
+function startExam(examCode){
+  db.collection('questions').where('examCode', '==', examCode).get().then(snap => {
+    const questions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!questions.length){ alert('Đề thi không có câu hỏi.'); return; }
+    questions.sort((a, b) => (a.type > b.type ? 1 : -1)); // gom nhóm TN1DA, DS4Y, TLN
+
+    currentExam = { code: examCode, subject: questions[0].subject, questions, answers: {} };
+    const duration = getDuration(currentExam.subject);
+    document.getElementById('examTitle').textContent = currentExam.subject + ' - ' + examCode;
+    document.getElementById('examSubtitle').textContent = questions.length + ' câu · ' + duration + ' phút';
+
+    renderExamBody();
+    startExamTimer(duration * 60);
+    document.getElementById('examScreen').style.display = 'block';
+  });
+}
+
+function startExamTimer(seconds){
+  examEndTime = Date.now() + seconds * 1000;
+  clearInterval(examTimerInterval);
+  examTimerInterval = setInterval(updateTimerDisplay, 1000);
+  updateTimerDisplay();
+}
+
+function updateTimerDisplay(){
+  const remain = Math.max(0, Math.round((examEndTime - Date.now()) / 1000));
+  const m = Math.floor(remain / 60).toString().padStart(2, '0');
+  const s = (remain % 60).toString().padStart(2, '0');
+  const timerEl = document.getElementById('examTimer');
+  timerEl.textContent = m + ':' + s;
+  timerEl.classList.toggle('warning', remain <= 300);
+  if (remain <= 0){
+    clearInterval(examTimerInterval);
+    alert('Hết giờ làm bài! Hệ thống sẽ tự động nộp bài.');
+    submitExam();
+  }
+}
+
+function renderExamBody(){
+  const parts = { TN1DA: [], DS4Y: [], TLN: [] };
+  currentExam.questions.forEach((q, idx) => parts[q.type].push({ ...q, idx }));
+
+  let html = '';
+  if (parts.TN1DA.length){
+    html += '<div class="part-title">Phần I - Trắc nghiệm nhiều lựa chọn</div>';
+    parts.TN1DA.forEach((q, i) => { html += renderTN1DA(q, i+1); });
+  }
+  if (parts.DS4Y.length){
+    html += '<div class="part-title">Phần II - Đúng / Sai</div>';
+    parts.DS4Y.forEach((q, i) => { html += renderDS4Y(q, i+1); });
+  }
+  if (parts.TLN.length){
+    html += '<div class="part-title">Phần III - Trả lời ngắn</div>';
+    parts.TLN.forEach((q, i) => { html += renderTLN(q, i+1); });
+  }
+  document.getElementById('examBody').innerHTML = html;
+}
+
+function renderTN1DA(q, num){
+  const opts = [['A', q.answerA], ['B', q.answerB], ['C', q.answerC], ['D', q.answerD]];
+  return `
+    <div class="q-card">
+      <div class="q-num">Câu ${num}</div>
+      <div class="q-content">${escapeHtml(q.content)}</div>
+      ${opts.map(([letter, text]) => `
+        <div class="option-row" id="opt-${q.id}-${letter}" onclick="selectTN1DA('${q.id}','${letter}')">
+          <div class="option-letter">${letter}</div>
+          <div>${escapeHtml(text)}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderDS4Y(q, num){
+  const lines = q.content.split('\n');
+  const stem = lines[0];
+  const subItems = lines.slice(1).filter(l => l.trim());
+  return `
+    <div class="q-card">
+      <div class="q-num">Câu ${num}</div>
+      <div class="q-content">${escapeHtml(stem)}</div>
+      ${subItems.map((line, i) => {
+        const letter = ['a','b','c','d'][i];
+        return `
+          <div class="ds-row">
+            <div style="flex:1; padding-right:8px;">${escapeHtml(line)}</div>
+            <div class="ds-btns">
+              <button class="ds-btn" id="ds-${q.id}-${letter}-D" onclick="selectDS4Y('${q.id}','${letter}','Đ')">Đúng</button>
+              <button class="ds-btn" id="ds-${q.id}-${letter}-S" onclick="selectDS4Y('${q.id}','${letter}','S')">Sai</button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderTLN(q, num){
+  return `
+    <div class="q-card">
+      <div class="q-num">Câu ${num}</div>
+      <div class="q-content">${escapeHtml(q.content)}</div>
+      <input type="text" placeholder="Nhập đáp số..." id="tln-${q.id}" oninput="selectTLN('${q.id}', this.value)">
+    </div>
+  `;
+}
+
+function escapeHtml(str){
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function selectTN1DA(qId, letter){
+  currentExam.answers[qId] = letter;
+  ['A','B','C','D'].forEach(l => {
+    document.getElementById('opt-' + qId + '-' + l).classList.toggle('selected', l === letter);
+  });
+}
+
+function selectDS4Y(qId, subLetter, value){
+  if (!currentExam.answers[qId]) currentExam.answers[qId] = {};
+  currentExam.answers[qId][subLetter] = value;
+  ['D','S'].forEach(v => {
+    const btn = document.getElementById('ds-' + qId + '-' + subLetter + '-' + v);
+    btn.classList.remove('on-true', 'on-false');
+  });
+  document.getElementById('ds-' + qId + '-' + subLetter + '-' + value).classList.add(value === 'Đ' ? 'on-true' : 'on-false');
+}
+
+function selectTLN(qId, value){
+  currentExam.answers[qId] = value.trim();
+}
+function confirmSubmitExam(){
+  const answeredCount = Object.keys(currentExam.answers).length;
+  const totalCount = currentExam.questions.length;
+  if (!confirm('Bạn đã làm ' + answeredCount + '/' + totalCount + ' câu. Xác nhận nộp bài?')) return;
+  submitExam();
+}
+
+function scoreDS4Y(correctStr, userAns){
+  // correctStr dạng "ĐSĐS", userAns dạng {a:'Đ', b:'S', c:'Đ', d:'S'}
+  const letters = ['a','b','c','d'];
+  let correctCount = 0;
+  letters.forEach((letter, i) => {
+    if (userAns && userAns[letter] === correctStr[i]) correctCount++;
+  });
+  const points = { 0: 0, 1: 0.1, 2: 0.25, 3: 0.5, 4: 1.0 };
+  return { correctCount, points: points[correctCount] };
+}
+
+function submitExam(){
+  clearInterval(examTimerInterval);
+  document.getElementById('examScreen').style.display = 'none';
+
+  let totalScore = 0;
+  const results = [];
+
+  currentExam.questions.forEach(q => {
+    const userAns = currentExam.answers[q.id];
+    let isCorrect = false;
+    let points = 0;
+    let maxPoints = 0;
+
+    if (q.type === 'TN1DA'){
+      maxPoints = 0.25;
+      isCorrect = userAns === q.correctAnswer;
+      points = isCorrect ? 0.25 : 0;
+    } else if (q.type === 'DS4Y'){
+      maxPoints = 1.0;
+      const r = scoreDS4Y(q.correctAnswer, userAns);
+      points = r.points;
+      isCorrect = r.correctCount === 4;
+    } else if (q.type === 'TLN'){
+      maxPoints = currentExam.subject === 'Toán' ? 0.5 : 0.25;
+      isCorrect = userAns && userAns.toString().trim() === q.correctAnswer.toString().trim();
+      points = isCorrect ? maxPoints : 0;
+    }
+
+    totalScore += points;
+    results.push({ ...q, userAns, isCorrect, points, maxPoints });
+  });
+
+  const maxTotal = currentExam.questions.reduce((sum, q) => {
+    if (q.type === 'TN1DA') return sum + 0.25;
+    if (q.type === 'DS4Y') return sum + 1.0;
+    return sum + (currentExam.subject === 'Toán' ? 0.5 : 0.25);
+  }, 0);
+
+  // Chuẩn hoá về thang điểm 10
+  const scoreOn10 = maxTotal > 0 ? (totalScore / maxTotal * 10) : 0;
+
+  const user = auth.currentUser;
+  db.collection('submissions').add({
+    userId: user.uid,
+    userName: currentUserName,
+    examCode: currentExam.code,
+    subject: currentExam.subject,
+    score: Math.round(scoreOn10 * 100) / 100,
+    totalQuestions: currentExam.questions.length,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  renderResultScreen(results, scoreOn10);
+}
+
+function renderResultScreen(results, scoreOn10){
+  let html = `
+    <div class="result-score">
+      <div style="color:var(--text-dim); font-size:13px;">Điểm số của bạn</div>
+      <div class="big">${scoreOn10.toFixed(2)}<span style="font-size:20px; color:var(--text-dim);">/10</span></div>
+    </div>
+  `;
+  results.forEach((r, i) => {
+    html += `
+      <div class="review-card ${r.isCorrect ? 'correct' : 'wrong'}">
+        <span class="review-tag ${r.isCorrect ? 'correct' : 'wrong'}">${r.isCorrect ? '✓ Đúng' : '✗ Sai'} (${r.points}/${r.maxPoints}đ)</span>
+        <div class="q-num">Câu ${i+1}</div>
+        <div class="q-content">${escapeHtml(r.content)}</div>
+        <div style="font-size:13px; color:var(--text-dim);">
+          Đáp án của bạn: <b style="color:var(--text);">${formatUserAnswer(r)}</b><br>
+          Đáp án đúng: <b style="color:var(--green-500);">${r.correctAnswer}</b>
+        </div>
+        ${r.explanation ? `<div class="explain-box">💡 ${escapeHtml(r.explanation)}</div>` : ''}
+      </div>
+    `;
+  });
+  document.getElementById('resultBody').innerHTML = html;
+  document.getElementById('resultScreen').style.display = 'block';
+}
+
+function formatUserAnswer(r){
+  if (r.type === 'DS4Y'){
+    if (!r.userAns) return '(chưa làm)';
+    return ['a','b','c','d'].map(l => r.userAns[l] || '?').join('');
+  }
+  return r.userAns || '(chưa làm)';
+}
+
+function closeResultScreen(){
+  document.getElementById('resultScreen').style.display = 'none';
+  showTab('lich-su');
+}
+
+// ================= LỊCH SỬ =================
+function loadHistory(){
+  const user = auth.currentUser;
+  if (!user) return;
+  db.collection('submissions').where('userId', '==', user.uid).orderBy('createdAt', 'desc').limit(50).get().then(snap => {
+    const box = document.getElementById('screen-lich-su').querySelector('.card');
+    if (snap.empty){
+      box.innerHTML = '<div class="empty-state"><div class="ic">📊</div>Chưa có lịch sử làm bài nào.</div>';
+      return;
+    }
+    box.innerHTML = snap.docs.map(doc => {
+      const d = doc.data();
+      const date = d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().toLocaleDateString('vi-VN') : '';
+      return `
+        <div class="exam-item">
+          <div>
+            <div class="exam-name">${d.subject} - ${d.examCode}</div>
+            <div class="exam-meta">${date}</div>
+          </div>
+          <div style="font-weight:700; color:var(--gold-500);" class="mono">${d.score}/10</div>
+        </div>
+      `;
+    }).join('');
+  });
 }
 
 // ---------- AUTH STATE ----------
