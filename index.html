@@ -65,6 +65,44 @@
   .navbtn{ flex:1; text-align:center; padding:10px 0 8px; background:none; border:none; color:var(--text-dim); font-family:inherit; font-size:11px; cursor:pointer; }
   .navbtn .ic{ font-size:20px; display:block; margin-bottom:2px; }
   .navbtn.on{ color:var(--gold-500); }
+
+  /* ---- Danh sách đề thi ---- */
+  .exam-item{ display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--line); }
+  .exam-item:last-child{ border-bottom:none; }
+  .exam-name{ font-weight:600; font-size:14px; }
+  .exam-meta{ font-size:12px; color:var(--text-dim); margin-top:2px; }
+
+  /* ---- Màn hình làm bài ---- */
+  #examScreen{ display:none; position:fixed; inset:0; background:var(--navy-950); z-index:100; overflow-y:auto; }
+  .exam-header{ position:sticky; top:0; background:var(--navy-900); border-bottom:1px solid var(--line); padding:14px 20px; display:flex; justify-content:space-between; align-items:center; z-index:10; }
+  .exam-timer{ font-family:'JetBrains Mono', monospace; font-size:18px; font-weight:700; color:var(--gold-500); }
+  .exam-timer.warning{ color:var(--red-500); }
+  .exam-body{ max-width:480px; margin:0 auto; padding:16px 20px 100px; }
+  .part-title{ font-weight:700; color:var(--gold-500); margin:20px 0 10px; font-size:15px; }
+  .q-card{ background:var(--navy-900); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:12px; }
+  .q-num{ font-size:12px; color:var(--text-dim); margin-bottom:6px; }
+  .q-content{ white-space:pre-wrap; font-size:14px; margin-bottom:12px; line-height:1.5; }
+  .option-row{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; border:1px solid var(--line); margin-bottom:6px; cursor:pointer; }
+  .option-row.selected{ border-color:var(--gold-500); background:rgba(224,180,76,0.1); }
+  .option-letter{ width:22px; height:22px; border-radius:50%; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+  .ds-row{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .ds-row:last-child{ border-bottom:none; }
+  .ds-btns{ display:flex; gap:6px; }
+  .ds-btn{ padding:5px 12px; border-radius:6px; border:1px solid var(--line); background:var(--navy-800); color:var(--text-dim); font-size:12px; cursor:pointer; font-family:inherit; }
+  .ds-btn.on-true{ background:var(--green-500); color:#fff; border-color:var(--green-500); }
+  .ds-btn.on-false{ background:var(--red-500); color:#fff; border-color:var(--red-500); }
+  .exam-submit-bar{ position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto; background:var(--navy-900); border-top:1px solid var(--line); padding:12px 20px; }
+
+  /* ---- Màn hình kết quả ---- */
+  .result-score{ text-align:center; padding:24px 0; }
+  .result-score .big{ font-size:48px; font-weight:700; color:var(--gold-500); font-family:'JetBrains Mono', monospace; }
+  .review-card{ background:var(--navy-900); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:12px; }
+  .review-card.correct{ border-left:4px solid var(--green-500); }
+  .review-card.wrong{ border-left:4px solid var(--red-500); }
+  .review-tag{ display:inline-block; font-size:11px; padding:2px 8px; border-radius:6px; margin-bottom:8px; }
+  .review-tag.correct{ background:rgba(76,175,125,0.2); color:var(--green-500); }
+  .review-tag.wrong{ background:rgba(224,92,92,0.2); color:var(--red-500); }
+  .explain-box{ background:var(--navy-800); border-radius:8px; padding:10px; margin-top:10px; font-size:13px; line-height:1.5; }
 </style>
 </head>
 <body>
