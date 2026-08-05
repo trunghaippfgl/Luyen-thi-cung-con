@@ -272,8 +272,89 @@ function selectGrade(grade){
   document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('on'));
 }
 
+let currentGradeSubject = '';
+const EXAM_KINDS = ['Ôn tập kiến thức', 'Bài tập về nhà', 'Kiểm tra 15 phút', 'Kiểm tra 1 tiết', 'Ôn tập cuối kỳ'];
+const EXAM_KIND_DURATION = {
+  'Ôn tập kiến thức': 0, 'Bài tập về nhà': 0,
+  'Kiểm tra 15 phút': 15, 'Kiểm tra 1 tiết': 45, 'Ôn tập cuối kỳ': 60
+};
+
 function selectSubjectForGrade(subject){
-  alert('Đã chọn: Lớp ' + currentGrade + ' - ' + subject + ' (bước tiếp theo sẽ hoàn thiện màn hình này)');
+  currentGradeSubject = subject;
+  document.getElementById('gradeTitle').textContent = 'Lớp ' + currentGrade + ' - ' + subject;
+  document.getElementById('subjectListBox').innerHTML = `
+    <div style="margin-bottom:10px;">
+      <span onclick="backToSubjectList()" style="cursor:pointer; font-size:13px; color:var(--text-dim); text-decoration:underline;">← Chọn môn khác</span>
+    </div>
+  ` + EXAM_KINDS.map(kind => `
+    <div class="exam-item" style="cursor:pointer;" onclick="loadGradeExamList('${kind}')">
+      <div class="exam-name">${kind}</div>
+      <div>›</div>
+    </div>
+  `).join('');
+}
+
+function backToSubjectList(){
+  selectGrade(currentGrade);
+}
+
+function loadGradeExamList(examKind){
+  db.collection('questions')
+    .where('grade', '==', currentGrade)
+    .where('subject', '==', currentGradeSubject)
+    .where('examType', '==', examKind)
+    .get().then(snap => {
+      const byExam = {};
+      snap.forEach(doc => {
+        const d = doc.data();
+        if (!byExam[d.examCode]) byExam[d.examCode] = 0;
+        byExam[d.examCode]++;
+      });
+      const codes = Object.keys(byExam);
+      let html = `
+        <div style="margin-bottom:10px;">
+          <span onclick="selectSubjectForGrade('${currentGradeSubject}')" style="cursor:pointer; font-size:13px; color:var(--text-dim); text-decoration:underline;">← ${currentGradeSubject}</span>
+        </div>
+        <h3 style="margin-top:0; color:var(--gold-500); font-size:14px;">${examKind}</h3>
+      `;
+      if (!codes.length){
+        html += '<div class="empty-state" style="padding:16px;">Chưa có nội dung cho phần này.</div>';
+      } else {
+        html += codes.map(code => `
+          <div class="exam-item">
+            <div>
+              <div class="exam-name">${code}</div>
+              <div class="exam-meta">${byExam[code]} câu</div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="startGradeExam('${code}', '${examKind}')">Bắt đầu</button>
+          </div>
+        `).join('');
+      }
+      document.getElementById('subjectListBox').innerHTML = html;
+    });
+}
+
+function startGradeExam(examCode, examKind){
+  db.collection('questions').where('examCode', '==', examCode).get().then(snap => {
+    const questions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!questions.length){ alert('Không có câu hỏi.'); return; }
+    questions.sort((a, b) => (a.type > b.type ? 1 : -1));
+
+    const duration = EXAM_KIND_DURATION[examKind] || 0;
+    currentExam = { code: examCode, subject: currentGradeSubject, questions, answers: {}, isPractice: duration === 0 };
+    document.getElementById('examTitle').textContent = 'Lớp ' + currentGrade + ' - ' + currentGradeSubject;
+    document.getElementById('examSubtitle').textContent = questions.length + ' câu · ' + (duration > 0 ? duration + ' phút' : 'Không giới hạn thời gian');
+
+    renderExamBody();
+    if (duration > 0){
+      startExamTimer(duration * 60);
+    } else {
+      clearInterval(examTimerInterval);
+      document.getElementById('examTimer').textContent = '∞';
+      document.getElementById('examTimer').classList.remove('warning');
+    }
+    document.getElementById('examScreen').style.display = 'block';
+  });
 }
 // ---------- AUTH UI SWITCHING ----------
 function showLoginForm(){
