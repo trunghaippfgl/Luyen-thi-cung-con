@@ -140,17 +140,30 @@
   <!-- ---- TAB: TRANG CHỦ ---- -->
   <div class="screen active" id="screen-trang-chu">
     <div class="card">
-      <div class="empty-state">
-        <div class="ic">👋</div>
-        Chào mừng bạn đến với Luyện Thi Cùng Con!<br>
-        Chọn "Đề thi" bên dưới để bắt đầu luyện tập.
+      <h3 style="margin-top:0; color:var(--gold-500); font-size:15px;">📚 Chọn lớp học</h3>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <button class="btn btn-ghost" style="padding:20px 0; font-size:16px;" onclick="selectGrade(3)">Lớp 3</button>
+        <button class="btn btn-ghost" style="padding:20px 0; font-size:16px;" onclick="selectGrade(7)">Lớp 7</button>
+        <button class="btn btn-ghost" style="padding:20px 0; font-size:16px;" onclick="selectGrade(9)">Lớp 9</button>
+        <button class="btn btn-ghost" style="padding:20px 0; font-size:16px;" onclick="selectGrade(12)">Lớp 12</button>
       </div>
     </div>
     <div class="card">
-      <h3 style="margin-top:0; color:var(--gold-500); font-size:15px;">📉 Chủ đề cần ôn thêm</h3>
+      <h3 style="margin-top:0; color:var(--gold-500); font-size:15px;">📉 Chủ đề cần ôn thêm (Lớp 12)</h3>
       <div id="weakTopicsBox">
         <div class="empty-state" style="padding:16px;">Đang tải thống kê...</div>
       </div>
+    </div>
+  </div>
+
+  <!-- ---- TAB: MÔN HỌC THEO LỚP (3, 7, 9) ---- -->
+  <div class="screen" id="screen-mon-hoc">
+    <div class="card">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+        <span onclick="showTab('trang-chu')" style="cursor:pointer; font-size:18px;">←</span>
+        <h3 style="margin:0; color:var(--gold-500); font-size:15px;" id="gradeTitle">Lớp</h3>
+      </div>
+      <div id="subjectListBox"></div>
     </div>
   </div>
   <!-- ---- TAB: ĐỀ THI ---- -->
@@ -232,6 +245,36 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 let currentUserName = '';
+let currentGrade = null;
+
+const GRADE_SUBJECTS = {
+  3: ['Toán', 'Tiếng Việt', 'Tiếng Anh', 'Tự nhiên và Xã hội', 'Đạo đức'],
+  7: ['Toán', 'Ngữ văn', 'Tiếng Anh', 'Khoa học tự nhiên', 'Lịch sử và Địa lý', 'GDCD'],
+  9: ['Toán', 'Ngữ văn', 'Tiếng Anh', 'Khoa học tự nhiên', 'Lịch sử và Địa lý', 'GDCD'],
+};
+
+function selectGrade(grade){
+  if (grade === 12){
+    showTab('de-thi');
+    return;
+  }
+  currentGrade = grade;
+  document.getElementById('gradeTitle').textContent = 'Lớp ' + grade;
+  const subjects = GRADE_SUBJECTS[grade] || [];
+  document.getElementById('subjectListBox').innerHTML = subjects.map(s => `
+    <div class="exam-item" style="cursor:pointer;" onclick="selectSubjectForGrade('${s}')">
+      <div class="exam-name">${s}</div>
+      <div>›</div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById('screen-mon-hoc').classList.add('active');
+  document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('on'));
+}
+
+function selectSubjectForGrade(subject){
+  alert('Đã chọn: Lớp ' + currentGrade + ' - ' + subject + ' (bước tiếp theo sẽ hoàn thiện màn hình này)');
+}
 // ---------- AUTH UI SWITCHING ----------
 function showLoginForm(){
   document.getElementById('loginForm').style.display = 'block';
