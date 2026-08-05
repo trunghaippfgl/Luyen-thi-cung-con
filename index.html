@@ -553,6 +553,11 @@ function submitExam(){
     subject: currentExam.subject,
     score: Math.round(scoreOn10 * 100) / 100,
     totalQuestions: currentExam.questions.length,
+    results: results.map(r => ({
+      content: r.content, type: r.type, correctAnswer: r.correctAnswer,
+      explanation: r.explanation || '', userAns: r.userAns || null,
+      isCorrect: r.isCorrect, points: r.points, maxPoints: r.maxPoints
+    })),
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 
@@ -611,7 +616,7 @@ function loadHistory(){
       const d = doc.data();
       const date = d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().toLocaleDateString('vi-VN') : '';
       return `
-        <div class="exam-item">
+        <div class="exam-item" style="cursor:pointer;" onclick="viewSubmission('${doc.id}')">
           <div>
             <div class="exam-name">${d.subject} - ${d.examCode}</div>
             <div class="exam-meta">${date}</div>
@@ -623,6 +628,14 @@ function loadHistory(){
   }).catch(e => {
     console.error(e);
     alert('Lỗi tải lịch sử: ' + e.message);
+  });
+}
+function viewSubmission(submissionId){
+  db.collection('submissions').doc(submissionId).get().then(doc => {
+    if (!doc.exists) return;
+    const d = doc.data();
+    if (!d.results){ alert('Bài làm này chưa lưu chi tiết đáp án.'); return; }
+    renderResultScreen(d.results, d.score);
   });
 }
 
