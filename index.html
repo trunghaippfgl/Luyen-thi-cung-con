@@ -165,6 +165,19 @@
   <!-- ---- TAB: ĐỀ THI ---- -->
   <div class="screen" id="screen-de-thi">
     <div class="card">
+      <h3 style="margin-top:0; color:var(--gold-500); font-size:15px;">🎯 Ôn tập theo chủ đề</h3>
+      <label>Môn học</label>
+      <select id="practiceSubject" onchange="onPracticeSubjectChange()">
+        <option value="">-- Chọn môn --</option>
+      </select>
+      <label>Chủ đề</label>
+      <select id="practiceTopic">
+        <option value="">-- Chọn chủ đề --</option>
+      </select>
+      <button class="btn btn-leaf" style="margin-top:12px;" onclick="startPractice()">Bắt đầu ôn tập</button>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0; color:var(--gold-500); font-size:15px;">📝 Đề thi hoàn chỉnh (có giờ)</h3>
       <div id="examListBox">
         <div class="empty-state">
           <div class="ic">📝</div>
@@ -312,14 +325,64 @@ function showTab(name){
   document.getElementById('screen-' + name).classList.add('active');
   document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('on'));
   document.getElementById('nav-' + name).classList.add('on');
-  if (name === 'de-thi') loadExamList();
+  if (name === 'de-thi'){ loadExamList(); loadPracticeFilters(); }
   if (name === 'lich-su') loadHistory();
 }
 
 // ================= ĐỀ THI =================
 const SUBJECT_DURATION = { 'Toán': 90, 'Ngữ văn': 120 };
 function getDuration(subject){ return SUBJECT_DURATION[subject] || 50; }
+function loadPracticeFilters(){
+  db.collection('questions').get().then(snap => {
+    const bySubject = {};
+    snap.forEach(doc => {
+      const d = doc.data();
+      if (!d.subject) return;
+      if (!bySubject[d.subject]) bySubject[d.subject] = new Set();
+      if (d.topic) bySubject[d.subject].add(d.topic);
+    });
+    window._practiceData = bySubject;
+    const sel = document.getElementById('practiceSubject');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">-- Chọn môn --</option>' +
+      Object.keys(bySubject).map(s => `<option value="${s}">${s}</option>`).join('');
+    sel.value = current;
+  });
+}
 
+function onPracticeSubjectChange(){
+  const subject = document.getElementById('practiceSubject').value;
+  const topicSel = document.getElementById('practiceTopic');
+  const topics = (window._practiceData && window._practiceData[subject]) ? Array.from(window._practiceData[subject]) : [];
+  topicSel.innerHTML = '<option value="">-- Tất cả chủ đề --</option>' +
+    topics.map(t => `<option value="${t}">${t}</option>`).join('');
+}
+
+function startPractice(){
+  const subject = document.getElementById('practiceSubject').value;
+  const topic = document.getElementById('practiceTopic').value;
+  if (!subject){ alert('Chọn môn học trước.'); return; }
+
+  let query = db.collection('questions').where('subject', '==', subject);
+  if (topic) query = query.where('topic', '==', topic);
+
+  query.get().then(snap => {
+    const questions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!questions.length){ alert('Không có câu hỏi nào phù hợp.'); return; }
+    questions.sort((a, b) => (a.type > b.type ? 1 : -1));
+
+    currentExam = { code: 'ONTAP-' + subject + (topic ? '-' + topic : ''), subject, questions, answers: {}, isPractice: true };
+    document.getElementById('examTitle').textContent = 'Ôn tập: ' + subject + (topic ? ' - ' + topic : '');
+    document.getElementById('examSubtitle').textContent = questions.length + ' câu · Không giới hạn thời gian';
+    document.getElementById('examTimer').textContent = '∞';
+    document.getElementById('examTimer').classList.remove('warning');
+    clearInterval(examTimerInterval);
+
+    renderExamBody();
+    document.getElementById('examScreen').style.display = 'block';
+  });
+}
+  
 function loadExamList(){
   db.collection('questions').get().then(snap => {
     const byExam = {};
@@ -546,6 +609,10 @@ function submitExam(){
   const scoreOn10 = maxTotal > 0 ? (totalScore / maxTotal * 10) : 0;
 
   const user = auth.currentUser;
+  if (currentExam.isPractice){
+    renderResultScreen(results, scoreOn10);
+    return;
+  }
   db.collection('submissions').add({
     userId: user.uid,
     userName: currentUserName,
